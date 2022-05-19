@@ -1,12 +1,3 @@
-# A1689zD1.f90 -> A1689zD1_bestfit.py
-# Dust mass and temperature estimator
-# 2018 March 8 by AKI
-# 2018 June 6 by AKI: Size update!
-# 2019 May 3 by AKI: B8 flux density and size are updated again!
-# 2020 March 1 by AKI: Dust mode update.
-# 2020 December 25 by Y. Fudamoto: Python version created
-#----------------------------------------------------------
-
 from astropy.cosmology import FlatLambdaCDM
 import astropy.units as u
 import numpy as np
@@ -20,24 +11,28 @@ import math, sys, time
 t_start = time.time()
 
 # 1. Input Source Properties --------------------------------------------------------------------
-zS  =   7.13
-muGL    =   9.3e+0                          #! K17 & Watson+15, Magnification
-Luv     =   8.0e+43 * (9.3e+0/muGL)           # UV luminosity [erg/s]
-eLuv    =   1.0e+43 * (9.3e+0/muGL)           # Uncertainty of UV luminosity [erg/s]
-sarc    =   0.46e+0                         # [arcsec]
-esarc   =   0.06e+0                         # [arcsec]
-lobs    =   np.array([1330, 873, 728,427],np.float)  # [um]: observed wavelength
-fnuobs  =   np.array([0.56e+0, 1.33e+0, 1.67e+0,1.43],np.float)  # [mJy] K17, B8: observed fluxes
-efnuobs =   np.array([0.10e+0, 0.14e+0, 0.36e+0,0.34],np.float)  # [mJy] K17, B8: observed flux errors
+zS  =   7.13                                # redshift of the source
+muGL    =   9.3e+0                          # Gravitational Magnification Factor
+Luv     =   8.0e+43 * (9.3e+0/muGL)         # [erg/s]: UV luminosity 
+eLuv    =   1.0e+43 * (9.3e+0/muGL)         # [erg/s]: Uncertainty of UV luminosity 
+sarc    =   0.46e+0                         # [arcsec]: Dust continuu size 
+esarc   =   0.06e+0                         # [arcsec]: Uncertainty of dust continuum size 
+lobs    =   np.array([1330, 873, 728,427],np.float)  # [um]: FIR observed wavelength
+fnuobs  =   np.array([0.56e+0, 1.33e+0, 1.67e+0,1.43],np.float)  # [mJy]: FIR observed fluxes
+efnuobs =   np.array([0.10e+0, 0.14e+0, 0.36e+0,0.34],np.float)  # [mJy]: FIR observed flux errors
+#------------------------------------------------------------------------------------------------
 
+# 2. Other parameters ---------------------------------------------------------------------------
+flg_plot=   1   # Do you want plots of best fit SEDs? yes: =1 no: =0
+Niter   =   5000 # number of iteration to estimate errors
+init_Md = 8.    # initial guess of dust mass  [log Md/Msun]
+init_xi = 0.1   # initial guess of Xi_clp
+#------------------------------------------------------------------------------------------------
+
+# Don't change following -----------------------------------------------------------------
 lobs    =   lobs * 1.0e-4
-
-# 2. Select Dust Geometry Model -----------------------------------------------------------------
 geo =   2
-# 0: Spherical shell, 1: Homogeneous sphere, 2: Clumpy sphere
 useband =   0   # 0: ALL, 1: B6, 2: B7, 3: B8
-Niter   =   5000
-flg_plot=   1
 #------------------------------------------------------------------------------------------------
 
 
@@ -45,9 +40,6 @@ flg_plot=   1
 #------------------------------------------------------------------------------------------------
 #- Script Starts --------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------
-
-#- Fitting Parameters ---------------------------------------------------------------------------
-# TBD?
 
 #- Define Global Constants -----------------------------------------------------------------------------
 PI  =   np.pi
@@ -204,14 +196,10 @@ for idx in range(Niter):
         return np.sum( ((pred_fnu_thin( geo, Const_Td, zS, Tcmb, dL, Luv, Robj, nuem, Kap,logMd, logclp) - fnuIR)**2.) / efnuIR**2.)
 
     args    =   [geo, Const_Td, zS, Tcmb, dL, Luv, Robj, nuem, Kap]
-    initial_guess   =   np.array([8.,0.1])
+    initial_guess   =   np.array([init_Md,init_xi])
 
     #- Perform Scipy.optimize.minimize --------------------
     Results =   minimize(func_chi2,initial_guess,args=args)
-
-    # print('\n########### Minimization Results:')
-    # print(Results)
-    # print('##################################\n')
 
     #- Calculate best fit results -------------------------------------------------------------------
     Mdbst, clpbst = Results.x
@@ -245,12 +233,6 @@ for idx in range(Niter):
         plot_Kap_arr[:] = Kap0 * (plot_nuem_arr / nu0)**beta
         plot_fexp_arr[idx,:] = pred_fnu_thin(geo, Const_Td, zS, Tcmb, dL, Luv, Robj, plot_nuem_arr, plot_Kap_arr, np.log10(Mdbst/Msun), np.log10(clpbst))
 
-
-# print(np.average(clp_arr),np.std(clp_arr))
-# print(np.average(Td_arr),np.std(Td_arr))
-# print(np.average(Md_arr),np.std(Md_arr))
-# print(np.average(Lir_arr),np.std(Lir_arr))
-
 stat_clp    =   np.percentile(clp_arr,[16,50,84])
 stat_Td     =   np.percentile(Td_arr,[16,50,84])
 stat_Md     =   np.percentile(Md_arr,[16,50,84])
@@ -265,18 +247,32 @@ t_end = time.time()
 elapsed_time = t_end-t_start
 print(f"elapsed time:{elapsed_time}")
 
-fig =   plt.figure()
+fig =   plt.figure(figsize=(9,7))
 ax1  =   fig.add_subplot(2,2,1)
 ax1.hist(clp_arr,bins=30)
+ax1.title.set_text('$\\xi_\mathrm{clp}$')
+ax1.set_xlabel('')
+ax1.set_ylabel('#')
 
 ax2 =   fig.add_subplot(2,2,2)
 ax2.hist(Td_arr,bins=30)
+ax2.title.set_text('Dust temperature')
+ax2.set_xlabel('K')
+ax2.set_ylabel('#')
 
 ax3 =   fig.add_subplot(2,2,3)
 ax3.hist(Md_arr,bins=30)
+ax3.title.set_text('Dust Mass')
+ax3.set_xlabel('log M$_\mathrm{d}$/M$_\odot$')
+ax3.set_ylabel('#')
 
 ax4 =   fig.add_subplot(2,2,4)
 ax4.hist(Lir_arr,bins=30)
+ax4.title.set_text('IR Luminosity')
+ax4.set_xlabel('log L$_\mathrm{IR}$/L$_\odot$')
+ax4.set_ylabel('#')
+
+plt.tight_layout()
 
 plt.show()
 
