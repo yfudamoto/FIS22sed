@@ -1,4 +1,4 @@
-### *FIS22*: Dust temperature and IR luminosity measurement method presented in Fudamoto, Inoue, and Sugahara 2022
+### *FIS22sed*: Dust temperature and IR luminosity measurement method presented in Fudamoto, Inoue, and Sugahara 2022
 
 
 *__FIS22_free.py__*: This code calculate clumpiness parameter (Xi_clp), Td, Lir using multiple ALMA continuum measurements and dust continuum emission size.
