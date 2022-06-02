@@ -1,5 +1,7 @@
 ### *FIS22*: Dust temperature and IR luminosity measurement method presented in Fudamoto, Inoue, and Sugahara 2022
 
+Please feel free to contact me if you have any questions to [Yoshinobu Fudamoto](mailto:yoshinobu.fudamoto@gmail.com?subject=[GitHub]%20FIS22)
+
 *__FIS22_free.py__*: This code calculate clumpiness parameter (Xi_clp), Td, Lir using multiple ALMA continuum measurements and dust continuum emission size.
 
 - **Required inputs**:
@@ -40,3 +42,4 @@ Larger values take more time than smaller values
 
     - Initial Guess for your dust mass (log Mdust/Msun)
     - Clumpiness parameter (log) and its error (log): default value is -1.02 $\pm$ 0.41
+
